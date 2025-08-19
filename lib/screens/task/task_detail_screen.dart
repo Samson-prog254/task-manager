@@ -19,13 +19,14 @@ class TaskDetailScreen extends ConsumerWidget {
           'Task Details',
           style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
+            color: Colors.white
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.blueAccent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit,color: Colors.white,),
             onPressed: () {
               Navigator.push(
                 context,

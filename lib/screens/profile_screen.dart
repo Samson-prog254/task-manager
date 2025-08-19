@@ -7,6 +7,28 @@ import '../providers/task_provider.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  // Helper function to get user initials safely
+  String _getUserInitials(String? displayName, String? email) {
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      return displayName.trim().substring(0, 1).toUpperCase();
+    } else if (email != null && email.trim().isNotEmpty) {
+      return email.trim().substring(0, 1).toUpperCase();
+    }
+    return 'U';
+  }
+
+  // Helper function to get display name safely
+  String _getDisplayName(String? displayName, String? email) {
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      return displayName.trim();
+    } else if (email != null && email.trim().isNotEmpty) {
+      // Extract name from email (part before @)
+      String emailName = email.split('@')[0];
+      return emailName.replaceAll('.', ' ').replaceAll('_', ' ');
+    }
+    return 'User';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
@@ -19,10 +41,12 @@ class ProfileScreen extends ConsumerWidget {
           'Profile',
           style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
+            color: const Color(0xFF1F2937),
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -33,42 +57,56 @@ class ProfileScreen extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF8B5CF6),
+                    const Color(0xFF7C3AED),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+                    color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: const Color(0xFF8B5CF6),
-                    backgroundImage: user?.photoURL != null
-                        ? NetworkImage(user!.photoURL!)
-                        : null,
-                    child: user?.photoURL == null
-                        ? Text(
-                      user?.displayName?.substring(0, 1).toUpperCase() ?? 'U',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                        : null,
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white,
+                      backgroundImage: user?.photoURL != null
+                          ? NetworkImage(user!.photoURL!)
+                          : null,
+                      child: user?.photoURL == null
+                          ? Text(
+                        _getUserInitials(user?.displayName, user?.email),
+                        style: const TextStyle(
+                          color: Color(0xFF8B5CF6),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                          : null,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    user?.displayName ?? 'User',
+                    _getDisplayName(user?.displayName, user?.email),
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1F2937),
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -76,7 +114,7 @@ class ProfileScreen extends ConsumerWidget {
                     user?.email ?? '',
                     style: GoogleFonts.dmSans(
                       fontSize: 16,
-                      color: const Color(0xFF6B7280),
+                      color: Colors.white.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -136,12 +174,12 @@ class ProfileScreen extends ConsumerWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -184,6 +222,7 @@ class ProfileScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -244,6 +283,7 @@ class ProfileScreen extends ConsumerWidget {
     bool isDestructive = false,
   }) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -284,7 +324,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildDivider() {
     return Container(
       height: 1,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       color: const Color(0xFFF1F5F9),
     );
   }
@@ -293,6 +333,9 @@ class ProfileScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         title: Text(
           'Sign Out',
           style: GoogleFonts.spaceGrotesk(
@@ -326,6 +369,10 @@ class ProfileScreen extends ConsumerWidget {
                     SnackBar(
                       content: Text('Error signing out: $e'),
                       backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   );
                 }

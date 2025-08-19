@@ -117,9 +117,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
           widget.task == null ? 'Add Task' : 'Edit Task',
           style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.blueAccent,
         elevation: 0,
       ),
       body: SingleChildScrollView(
