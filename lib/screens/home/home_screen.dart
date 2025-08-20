@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/Nav_item_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/task_provider.dart';
 import '../../widgets/task_card.dart';
@@ -276,20 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 }
 
-// Navigation item model
-class NavItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final Color color;
 
-  NavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.color,
-  });
-}
 
 class HomeTab extends ConsumerWidget {
   const HomeTab({super.key});

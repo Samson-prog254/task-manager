@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   // Page controller for the stepper
   final PageController _pageController = PageController();
 
@@ -44,6 +45,20 @@ class _SignupScreenState extends State<SignupScreen> {
     'Personal Info',
     'Security'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to auth state changes
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null && mounted) {
+        // User is signed in, navigate to home screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    });
+  }
 
   void _nextStep() {
     // Validate the current step before proceeding
@@ -82,6 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
       });
 
       try {
+        // Create user account
         final UserCredential userCredential =
         await _auth.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
@@ -89,6 +105,46 @@ class _SignupScreenState extends State<SignupScreen> {
         );
 
         final user = userCredential.user;
+
+        if (user != null) {
+          // Update user profile with display name
+          await user.updateDisplayName(_fullNameController.text.trim());
+
+          // Create user document in Firestore
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email,
+            'displayName': _fullNameController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastLoginAt': FieldValue.serverTimestamp(),
+          });
+
+          // Reload user to get updated profile
+          await user.reload();
+
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Account created successfully! Welcome to Task Manager!',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+
+          // Navigation will be handled by the auth state listener
+          // But we can also manually navigate as a fallback
+          if (mounted) {
+            await Future.delayed(const Duration(milliseconds: 500));
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }
+        }
 
       } on FirebaseAuthException catch (e) {
         String message;
@@ -102,22 +158,32 @@ class _SignupScreenState extends State<SignupScreen> {
           case 'invalid-email':
             message = 'The email address is invalid. Please enter a valid email.';
             break;
+          case 'operation-not-allowed':
+            message = 'Email/password accounts are not enabled. Please contact support.';
+            break;
+          case 'network-request-failed':
+            message = 'Network error. Please check your internet connection.';
+            break;
           default:
-            message = 'An error occurred. Please try again later.';
+            message = e.message ?? 'An error occurred. Please try again later.';
         }
-        setState(() {
-          _errorMessage = message;
-          _isLoading = false;
-        });
+
+        if (mounted) {
+          setState(() {
+            _errorMessage = message;
+            _isLoading = false;
+          });
+        }
       } catch (e) {
-        setState(() {
-          _errorMessage = 'An unexpected error occurred. Please try again.';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'An unexpected error occurred. Please try again.';
+            _isLoading = false;
+          });
+        }
       }
     }
   }
-
 
   @override
   void dispose() {
@@ -131,6 +197,18 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to auth state using Riverpod
+    ref.listen<AsyncValue<User?>>(authStateProvider, (previous, next) {
+      next.whenData((user) {
+        if (user != null && mounted) {
+          // User is authenticated, navigate to home
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      });
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -445,7 +523,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your email';
                 }
-                if (!value.contains('@') || !value.contains('.')) {
+                if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                   return 'Please enter a valid email';
                 }
                 return null;

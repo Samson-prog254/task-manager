@@ -24,13 +24,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingData(
       title: 'Stay Focused',
       description: 'Focus on what matters most. Prioritize your tasks and boost your productivity.',
-      lottieAsset: 'assets/animations/focus.json',
+      lottieAsset: 'Assets/Animations/task.json',
       backgroundColor: const Color(0xFF10B981),
     ),
     OnboardingData(
       title: 'Achieve Your Goals',
       description: 'Track your progress and celebrate your achievements. Turn your dreams into reality.',
-      lottieAsset: 'assets/animations/achieve.json',
+      lottieAsset: 'Assets/Animations/sucess.json',
       backgroundColor: const Color(0xFF3B82F6),
     ),
   ];
